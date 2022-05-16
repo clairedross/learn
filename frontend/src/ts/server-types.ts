@@ -6,22 +6,23 @@ import {ResourceList} from './resource';
 // TS - To Server
 
 export namespace RunProgram {
-  export interface FS {
-    identifier: string;
-    message: string;
-  }
 
   interface SwitchType {
     [key : string]: Array<string>;
   }
 
-  export interface TS {
+  export interface TSData {
     files: ResourceList;
     main: string;
     mode: string;
     switches: SwitchType;
     name: string;
     lab: boolean;
+  }
+
+  export interface TS {
+      action: string,
+      data: TSData
   }
 }
 
@@ -43,24 +44,21 @@ export namespace CheckOutput {
   }
 
   export interface RunMsg {
+    ref?: number;
     type: string;
     data: string;
   }
 
-  export interface OutputLine {
-    msg: RunMsg;
-    ref: number;
-  }
-
   export interface FS {
-    output: Array<OutputLine>;
+    output: Array<RunMsg>;
     status: number;
     completed: boolean;
     message: string;
   }
 
-  export interface TS {
-    identifier: string;
-    read: number;
+  export interface FS_Error {
+    message : string;
+    connectionId: string;
+    requestId: string;
   }
 }

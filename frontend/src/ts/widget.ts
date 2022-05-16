@@ -264,7 +264,7 @@ class Widget {
 
     const files = this.collectResources();
 
-    const serverData: RunProgram.TS = {
+    const serverData: RunProgram.TSData = {
       files: files,
       main: this.main,
       mode: mode,
@@ -274,12 +274,12 @@ class Widget {
     };
 
     const worker = new ServerWorker(this.server,
-        (data: CheckOutput.FS): number => {
+        (data: CheckOutput.FS): boolean => {
           return this.processCheckOutput(data);
         });
 
     try {
-      await worker.request(serverData, 'run_program');
+      worker.execute(serverData);
     } catch (error) {
       this.outputArea.addError(Strings.MACHINE_BUSY_LABEL);
       console.error('Error:', error);
@@ -304,19 +304,6 @@ class Widget {
     };
 
     return fetchBlob(serverData, this.serverAddress('download'));
-  }
-
-  /**
-   * Returns the correct Area to place data in
-   *
-   * @param {number} ref - should be null for Widget
-   * @return {Area} the area to place returned data
-   */
-  protected getHomeArea(ref: number): Area {
-    if (ref != null) {
-      throw new Error('Malformed data packet has ref in non-lab.');
-    }
-    return this.outputArea;
   }
 
   /**
@@ -415,14 +402,13 @@ class Widget {
    * @param {CheckOutput.FS} data - The data from check_output
    * @return {number} the number of lines read by this function
    */
-  private processCheckOutput(data: CheckOutput.FS): number {
-    let readLines = 0;
-
+  private processCheckOutput(data: CheckOutput.FS): boolean {
     for (const ol of data.output) {
-      const homeArea = this.getHomeArea(ol.ref);
-      readLines++;
+      if ('ref' in ol) {
+        throw new Error('Malformed data packet has ref in non-lab.');
+      }
 
-      this.handleMsgType(ol.msg, homeArea);
+      this.handleMsgType(ol, this.outputArea);
     }
 
     if (data.completed) {
@@ -432,7 +418,7 @@ class Widget {
       }
     }
 
-    return readLines;
+    return data.completed;
   }
 
   /**
